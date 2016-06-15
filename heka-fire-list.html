@@ -1,0 +1,295 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymerfire/firebase-query.html">
+<link rel="import" href="../iron-list/iron-list.html">
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
+
+<link rel="import" href="heka-fire-card.html">
+<!--
+# heka-fire-list
+
+`<heka-fire-list>` wraps the content of a firebase-collection into an iron-list
+
+[API Docs and Demo](https://heka-house-polymer-demos.firebaseapp.com/heka-fire#heka-fire-list)
+
+[Source](http://github.com/hekahouse/heka-fire/)
+
+## Install
+
+    bower install --save HekaHouse/heka-fire
+
+## Example
+
+    <heka-fire-list
+      app-name="heka-house"
+      app="{{app}}"
+      user="{{user}}"
+      firebase-branch="/sample"
+      route="default"
+      path="default">
+    </heka-fire-list>
+
+The Firebase document is initiaized once the user and app properties are provided.
+
+These come from associated heka-fire and firebase-auth elements
+
+## Notes
+
+`route` must match `path` to trigger the Firebase collection to initialize.
+
+These should correspond with the url used to access to ensure lazy loading.
+
+This element uses the `firebase-query` to access data.
+
+## Dependencies
+
+Element dependencies are managed via [Bower](http://bower.io/). You can
+install that via:
+
+    npm install -g bower
+
+Then, go ahead and download the element's dependencies:
+
+    bower install
+
+heka-fire-list is based on standard polymer elements from Google
+
+including the pre-release [polymerfire](https://github.com/firebase/polymerfire)
+
+until polymerfire supports Firebase storage all heka-fire elements utilize heka-fire.html in place of firebase-app
+
+@group HekaHouse
+@element heka-fire-list
+@demo demo/heka-fire-list.html
+@hero hero.svg
+-->
+
+
+<dom-module id="heka-fire-list">
+  <template>
+  <style>
+    :host {
+      display: block;
+    }
+    #listContainer {
+      display: flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      align-content: stretch;
+      width: 100%;
+      min-height:200px;
+      margin: 4px;
+    }
+  </style>
+
+    <firebase-query log
+      id="firebaseQuery"
+      app-name="{{appName}}"
+      query="{{query}}"
+      data="{{collected}}"
+      order-by-child="{{orderByChild}}"
+      equal-to="{{equalTo}}"
+      limit-to-first="{{limitToFirst}}"
+      limit-to-last="{{limitToLast}}"></firebase-query>
+
+      <template is="dom-if" if="[[collected]]">
+        <div class="fit">
+          <iron-list id="listContainer" class="fit" items="{{collected}}" as="doc">
+              <template>
+                <heka-fire-card
+                  app-name="{{appName}}"
+                  app="{{app}}"
+                  user="{{user}}"
+                  firebase-branch="{{firebaseBranch}}"
+                  document-key="{{doc.$key}}"
+                  readonly="{{readonly}}">
+                </heka-fire-card>
+              </template>
+          </iron-list>
+        </div>
+      </template>
+  </template>
+</dom-module>
+<script>
+
+  Polymer({
+    is: 'heka-fire-list',
+
+    properties: {
+      /**
+      * path to Firebase collection
+      */
+      firebaseBranch: {
+        type: String,
+        notify: true
+      },
+      /**
+      * Firebase App name used in firebase-app
+      */
+      appName: {
+        type: String,
+        notify: true
+      },
+
+      /**
+      * Firebase user to ensure setup
+      */
+      user: {
+        type: Object,
+        notify: true
+      },
+      /**
+      * Firebase app to ensure setup
+      */
+      app: {
+        type: Object,
+        notify: true
+      },
+      /**
+      * URL Path that is currently active
+      * Triggers Firebase initialization
+      */
+      route: {
+        type: String,
+        notify: true,
+        observer: '_routed'
+      },
+      /**
+      * Expected URL path that will display this element
+      * Triggers Firebase initialization
+      */
+      path: {
+        type: String,
+        notify: true,
+        observer: '_routed'
+      },
+      /**
+     * Firebase Collection items
+     * @type {{elements: Array<FirebaseDocument>}}
+     */
+      collected: {
+        type: Array,
+        notify: true
+      },
+     /**
+     * Pass through value for inner firebase-card
+     */
+      readonly: {
+        type: Boolean,
+        notify: true
+      },
+      /**
+       * Pass through value for inner firebase-query
+       * The child key of each query result to order the query by.
+       *
+       * Changing this value generates a new `query` ordered by the
+       * specified child key.
+       */
+      orderByChild: {
+        type: String,
+        notify: true,
+        value: ''
+      },
+      /**
+       * Pass through value for inner firebase-query
+       * The value to start at in the query.
+       *
+       * Changing this value generates a new `query` with the specified
+       * starting point. The generated `query` includes children which match
+       * the specified starting point.
+       */
+      startAt: {
+        type: String,
+        notify: true,
+        value: ''
+      },
+      /**
+       * Pass through value for inner firebase-query
+       * The value to end at in the query.
+       *
+       * Changing this value generates a new `query` with the specified
+       * ending point. The generated `query` includes children which match
+       * the specified ending point.
+       */
+      endAt: {
+        type: String,
+        notify: true,
+        value: null
+      },
+      /**
+       * Pass through value for inner firebase-query
+       * Specifies a child-key value that must be matched for each candidate result.
+       *
+       * Changing this value generates a new `query` which includes children
+       * which match the specified value.
+       */
+      equalTo: {
+        type: Object,
+        notify: true,
+        value: null
+      },
+      /**
+       * Pass through value for inner firebase-query
+       * The maximum number of nodes to include in the query.
+       *
+       * Changing this value generates a new `query` limited to the first
+       * number of children.
+       */
+      limitToFirst: {
+        type: Number,
+        notify: true,
+        value: 0
+      },
+      /**
+       * Pass through value for inner firebase-query
+       * The maximum number of nodes to include in the query.
+       *
+       * Changing this value generates a new `query` limited to the last
+       * number of children.
+       */
+      limitToLast: {
+        type: Number,
+        notify: true,
+        value: 0
+      }
+    },
+    observers: ['_routed(firebaseBranch,appName,route,path,app,user)'],
+    /**
+    * Called when all configuration properties are set
+    * If all have been set along with the firebase url,
+    * applies firebasse url to firebase-query.path
+    */
+    _routed: function(firebaseBranch,appName,route,path,app,user) {
+      if (app
+          && user
+          && this.route === this.path
+          && this.firebaseBranch) {
+        this.$.firebaseQuery.path = this.firebaseBranch;
+      }
+    },
+    /**
+    * Convenience function to add a new object to a collection
+    * If key is provided use it otherwise use default Firebase key
+    */
+    add: function(object,key) {
+      if (key) {
+        this.$.firebaseQuery.query.ref.child(key).set(object);
+      } else {
+        this.$.firebaseQuery.query.ref.push().set(object);
+      }
+
+    },
+    /**
+    * Convenience function to remove an object identified by provided key
+    */
+    remove: function(key) {
+      this.$.firebaseQuery.query.ref.child(key).remove()
+      .then(function() {
+        console.log("Remove succeeded.")
+      })
+      .catch(function(error) {
+        console.log("Remove failed: " + error.message)
+      });
+    }
+  });
+</script>

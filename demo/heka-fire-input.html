@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <title>heka-fire-input demo</title>
+    <script src="../../webcomponentsjs/webcomponents-lite.min.js"></script>
+    <link rel="import" href="../../polymerfire/firebase-auth.html">
+    <link rel="import" href="../heka-fire.html">
+    <link rel="import" href="../heka-fire-input.html">
+
+
+
+    <style is="custom-style" include="demo-pages-shared-styles">
+      app-header span {
+        margin: 16px;
+      }
+    </style>
+  </head>
+  <body unresolved>
+    <template is="dom-bind">
+      <app-header condenses fixed effects="resize-title blend-background waterfall">
+        <span>loads a firebase document value for display in a paper-input.</span>
+      </app-header>
+      <heka-fire
+        id="app"
+        name="heka-house"
+        api-key="API-KEY"
+        auth-domain="heka-house-polymer-demos.firebaseapp.com"
+        database-url="https://heka-house-polymer-demos.firebaseio.com"
+        app="{{app}}">
+      </heka-fire>
+      <firebase-auth
+        id="auth"
+        app-name="heka-house"
+        user="{{user}}"></firebase-auth>
+      <heka-fire-input
+        app-name="heka-house"
+        user="{{user}}"
+        app="{{app}}"
+        firebase-branch="/sample/Hatfield Sparks/favoriteFruit"
+        label="/favoriteFruit"></heka-fire-input>
+  </template>
+  <script type="text/javascript">
+    document.addEventListener('WebComponentsReady', function() {
+      document.querySelector('firebase-auth').signInAnonymously();
+    });
+  </script>
+</body>
+</html>

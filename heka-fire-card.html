@@ -1,0 +1,238 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymerfire/firebase-document.html">
+<link rel="import" href="../paper-card/paper-card.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+
+<link rel="import" href="heka-fire-input.html">
+<!--
+# heka-fire-card
+
+`<heka-fire-card>` wraps the content of a firebase-document into a paper-card container.
+
+[API Docs and Demo](https://heka-house-polymer-demos.firebaseapp.com/heka-fire#heka-fire-card)
+
+[Source](http://github.com/hekahouse/heka-fire/)
+
+The card header contains the name property of the firebase-document.data,
+each document value is available for editing in paper-input elements
+via the show detail button.
+
+## Install
+
+    bower install --save HekaHouse/heka-fire
+
+## Example
+
+    <heka-fire-card
+      app-name="heka-house"
+      user="{{user}}"
+      app="{{app}}"
+      firebase-branch="/sample"
+      document-key="Hatfield Sparks" readonly>
+    </heka-fire-card>
+
+The Firebase document is initiaized once the user and app properties are provided.
+
+These come from associated firebase-app and firebase-auth elements
+
+## Note
+
+firebase-branch corresponds to the path property of a firebase-document,
+
+this path should lead to a collection, designed to be a collection from a [firebase-list](https://heka-house-polymer-demos.firebaseapp.com/firebase-list)
+
+document-key represents the key for an item in the collection specified in firebase-branch
+
+## Dependencies
+
+Element dependencies are managed via [Bower](http://bower.io/). You can
+install that via:
+
+    npm install -g bower
+
+Then, go ahead and download the element's dependencies:
+
+    bower install
+
+heka-fire-card is based on standard polymer elements from Google
+
+including the pre-release [polymerfire](https://github.com/firebase/polymerfire)
+
+until polymerfire supports Firebase storage all heka-fire elements utilize heka-fire.html in place of firebase-app
+
+@group HekaHouse
+@element heka-fire-card
+@demo demo/heka-fire-card.html
+-->
+
+<dom-module id="heka-fire-card">
+  <template>
+  <style>
+    :host {
+      display: block;
+    }
+    paper-card {
+      padding: 8px;
+      width: 90%;
+      min-width: 300px;
+    }
+  </style>
+    <firebase-document
+      id="firebaseDocument"
+      app-name="{{appName}}"
+      data="{{fireDocument}}"></firebase-document>
+    <paper-card heading="{{fireDocument.name}}" hidden$="{{hidden}}">
+      <div class="card-content">
+        <div class="card-actions">
+          <paper-button id="detailToggle" on-tap="_showDetails">{{toggleText}}</paper-button>
+        </div>
+        <iron-collapse id="collapse">
+          <template is="dom-repeat" items="{{leaves}}" as="leaf">
+            <heka-fire-input
+              user="{{user}}"
+              app="{{app}}"
+              firebase-branch="[[_getLeafUrl(leaf)]]"
+              label="[[leaf]]"
+              app-name="{{appName}}"
+              readonly="{{readonly}}"></heka-fire-input>
+          </template>
+        </iron-collapse>
+      </div>
+    </paper-card>
+    <br/><br/>
+  </template>
+</dom-module>
+<script>
+
+  Polymer({
+    is: 'heka-fire-card',
+
+
+    properties: {
+      /**
+      * Firebase Document assigned to card
+      * @type {{elements: FirebaseDocument}}
+      */
+      fireDocument: {
+        type: Object,
+        notify: true
+      },
+      /**
+      * URL to firebase collection
+      */
+      firebaseBranch: {
+        type: String,
+        notify: true
+      },
+      /**
+      * Firebase App name used in firebase-app
+      */
+      appName: {
+        type: String,
+        notify: true
+      },
+
+      /**
+      * Firebase user to ensure setup
+      */
+      user: {
+        type: Object,
+        notify: true
+      },
+      /**
+      * Firebase app to ensure setup
+      */
+      app: {
+        type: Object,
+        notify: true
+      },
+      /**
+      * Key to document assigned to card
+      */
+      documentKey: {
+        type: String,
+        notify: true
+      },
+      readonly: {
+        type: Boolean,
+        notify: true
+      },
+      hidden: {
+        type: Boolean,
+        notify: true,
+        value: false
+      },
+      toggleText: {
+        type: String,
+        notify: true,
+        value: 'Show Details'
+      },
+      /**
+     * Firebase value paths
+     * computed from _findLeaves(fireDocument)
+     * @type {{elements: Array<String>}}
+     */
+      leaves: {
+        type: Array,
+        notify: true,
+        computed: '_findLeaves(fireDocument)'
+      }
+    },
+    observers: ['_applyPath(firebaseBranch,appName,documentKey,app,user)'],
+    /**
+    * Open or close the details secction, triggered by show details button
+    */
+    _showDetails: function() {
+      if (this.$.collapse.opened) {
+        this.toggleText = "Show Details";
+      } else {
+        this.toggleText = "Hide Details";
+      }
+      this.$.collapse.toggle();
+    },
+    /**
+    * Generate a list of paths to all values for a Firebasse Document
+    */
+    _findLeaves: function(fireDocument) {
+      var list = [];
+      (function(o, r) {
+        r = r || '';
+        if (typeof o != 'object') {
+          return true;
+        }
+        for (var c in o) {
+          if (arguments.callee(o[c], r + "/" + c)) {
+            list.push(r.substring(1) + "/" + c);
+          }
+        }
+      })(fireDocument);
+
+      return list;
+    },
+    /**
+    * Set Firebase Document location fires for both firebaseBranch and documentKey
+    * only applies once both have fired
+    */
+    _applyPath: function(firebaseBranch,appName,documentKey,app,user) {
+      if (app && user) {
+        this.$.firebaseDocument.reset();
+        this.$.firebaseDocument.path=firebaseBranch+"/"+documentKey;
+      }
+    },
+    /**
+    * Build the Firebase URL for a specific value node
+    */
+    _getLeafUrl: function(leaf) {
+      if (this.firebaseBranch && this.documentKey) {
+        if (leaf.substring(0,1) === '/') {
+          leaf = leaf.substring(1);
+        }
+        return this.firebaseBranch+"/"+this.documentKey+"/"+leaf;
+      } else {
+        return undefined;
+      }
+    }
+  });
+</script>

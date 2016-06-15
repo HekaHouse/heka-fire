@@ -1,0 +1,237 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymerfire/firebase-query.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
+<!--
+# heka-fire-upload
+
+`<heka-fire-upload>` wraps a Firebase query and storage reference in a Polymer element with file upload drop target
+
+When file is dropped on target it is uploaded to Firebase storage and logged in the Firebase DB
+
+[API Docs and Demo](https://heka-house-polymer-demos.firebaseapp.com/heka-fire#heka-fire-upload)
+
+[Source](http://github.com/hekahouse/heka-fire/)
+
+## Install
+
+    bower install --save HekaHouse/heka-fire
+
+## Example
+    <heka-fire-upload
+      id="store"
+      app="[[app]]"
+      app-name="heka-house"
+      key="demo"
+      path="public"
+      storage="{{storage}}"
+      uploaded-by="[[user.uid]]"
+      label="drop file to upload"></heka-fire-upload>
+
+## Note
+
+The Firebase query is initiaized once the app, appName and key properties are provided.
+
+App comes from associated heka-fire element
+
+## Dependencies
+
+Element dependencies are managed via [Bower](http://bower.io/). You can
+install that via:
+
+    npm install -g bower
+
+Then, go ahead and download the element's dependencies:
+
+    bower install
+
+heka-fire-upload is based on standard polymer elements from Google
+
+including the pre-release [polymerfire](https://github.com/firebase/polymerfire)
+
+until polymerfire supports Firebase storage all heka-fire elements utilize heka-fire.html in place of firebase-app
+
+@group HekaHouse
+@element heka-fire-upload
+@demo demo/heka-fire-upload.html
+
+-->
+<dom-module id="heka-fire-upload">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      #dropZone {
+        border-style: dashed;
+        margin:  8px;
+        padding: 4px;
+        width: auto;
+        height: auto;
+        min-width: 48px;
+        min-height: 48px;
+      }
+    </style>
+    <firebase-query
+      id="doc"
+      app-name="{{appName}}"></firebase-query>
+    <div id="dropZone">
+      {{label}}
+      <paper-progress id="uploadProgress" value="0" min="0" max="100" hidden></paper-progress>
+    </div>
+  </template>
+
+
+  <script>
+    Polymer({
+
+      is: 'heka-fire-upload',
+
+      properties: {
+        app: {
+          type: Object,
+          notify: true
+        },
+        uploadedBy: {
+          type: String,
+          notify: true
+        },
+        storage: {
+          type: Object,
+          notify: true
+        },
+        appName: {
+          type: String,
+          notify: true
+        },
+        bucket: {
+          type: String,
+          notify: true
+        },
+        label: {
+          type: String,
+          notify: true
+        },
+        readyLabel: {
+          type: String,
+          notify: true,
+          value: "drop file to upload"
+        },
+        key: {
+          type: String,
+          notify: true
+        },
+        path: {
+          type: String,
+          notify: true
+        },
+        uploadingMeta: {
+          type: Object,
+          notify: true,
+          value: {}
+        }
+      },
+      observers: ['_initApp(app,appName,key,path)'],
+      attached: function() {
+        this.$.dropZone.addEventListener('dragover', this._handleDrag.bind(this), false);
+        this.$.dropZone.addEventListener('drop', this._handleDrop.bind(this), false);
+      },
+      _handleDrag: function(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+        evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+      },
+      _handleDrop: function(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+
+        if (!this.$.uploadProgress.hidden) {
+          alert("please wait until upload is complete");
+          return;
+        }
+
+        var files = evt.dataTransfer.files; // FileList object.
+        this.$.uploadProgress.hidden = false;
+        this.$.uploadProgress.value = 0;
+        this.readyLabel = this.label;
+        this.label = "uploading..."
+        for (var i = 0, f; f = files[i]; i++) {
+
+          var file = f;
+          var childRef = this.storage.child(file.name);
+          var tasked = childRef.put(file);
+          this.uploadingMeta = {
+            "name": file.name,
+            "path":childRef.fullPath,
+            "uploadedBy": this.uploadedBy
+          };
+
+          tasked.on(
+            firebase.storage.TaskEvent.STATE_CHANGED,
+            this._handleUploadTask.bind(this),
+            this._handleUploadError.bind(this),
+            this._handleUploadComplete.bind(this)
+          );
+          this._handleUploadTask(tasked);
+          break;
+        }
+      },
+      _handleUploadTask: function(snapshot) {
+
+        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+        var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        this.$.uploadProgress.value = progress;
+        switch (snapshot.state) {
+          case firebase.storage.TaskState.PAUSED: // or 'paused'
+            console.log('Upload is paused');
+            break;
+          case firebase.storage.TaskState.RUNNING: // or 'running'
+            console.log('Upload is running');
+            break;
+        }
+      },
+      _handleUploadError: function(error) {
+        this._resetUploader();
+        switch (error.code) {
+          case 'storage/unauthorized':
+            console.log('Upload unauthorized');
+            break;
+
+          case 'storage/canceled':
+            console.log('Upload canceled');
+            break;
+
+          case 'storage/unknown':
+            console.log('Upload failed');
+            break;
+        }
+      },
+      _handleUploadComplete: function() {
+        var uploaded = new Date();
+        this.uploadingMeta.uploaded = uploaded.toString();
+        this.$.doc.query.ref.push().set(this.uploadingMeta);
+        this._resetUploader();
+        console.log('Upload is complete');
+      },
+      _resetUploader: function() {
+        this.uploadingMeta = {};
+        this.$.uploadProgress.value = 0;
+        this.$.uploadProgress.hidden = true;
+        this.label = this.readyLabel;
+      },
+      _initApp: function(app,appName,key,path) {
+        if (!this.label) {
+          this.label = this.readyLabel;
+        }
+        if (app && appName && key) {
+          this.storage = firebase.app(this.appName).storage().ref().child(key+'/'+path);
+          this.$.doc.path = path+'/'+key+"/upload";
+        }
+      },
+      child: function(child) {
+        if (this.upload) {
+          return this.upload.child(child).ref();
+        }
+      }
+    });
+  </script>
+</dom-module>

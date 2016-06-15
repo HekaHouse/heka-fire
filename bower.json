@@ -1,0 +1,23 @@
+{
+  "name": "heka-fire",
+  "description": "A collection of elements for integrating Firebase.",
+  "main": [
+    "heka-fire.html",
+    "heka-fire-input.html",
+    "heka-fire-card.html",
+    "heka-fire-list.html",
+    "heka-fire-upload.html"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.5.0",
+    "iron-component-page": "^1.1.6",
+    "polymerfire": "firebase/polymerfire#^0.9.2",
+    "paper-progress": "PolymerElements/paper-progress#^1.0.9"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "web-component-tester": "^4.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  }
+}
