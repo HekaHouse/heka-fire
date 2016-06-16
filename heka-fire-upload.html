@@ -63,19 +63,37 @@ until polymerfire supports Firebase storage all heka-fire elements utilize heka-
       }
       #dropZone {
         border-style: dashed;
+        border-color: var(--accent-color);
         margin:  8px;
         padding: 4px;
         width: auto;
         height: auto;
         min-width: 48px;
         min-height: 48px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-content: space-around;
+        flex-wrap: nowrap;
+        text-align: -webkit-center;
+      }
+      heka-icon-transition#dropZone {
+        margin: auto;
+      }
+      paper-progress#dropZone {
+        width: 80%;
+        margin: auto;
+      }
+      p#dropZone {
+        margin: auto;
       }
     </style>
     <firebase-query
       id="doc"
       app-name="{{appName}}"></firebase-query>
     <div id="dropZone">
-      {{label}}
+      <p>{{label}}</p>
+      <heka-icon-transition id="dropState" shape="plus"></heka-icon-transition>
       <paper-progress id="uploadProgress" value="0" min="0" max="100" hidden></paper-progress>
     </div>
   </template>
@@ -138,12 +156,13 @@ until polymerfire supports Firebase storage all heka-fire elements utilize heka-
       _handleDrag: function(evt) {
         evt.stopPropagation();
         evt.preventDefault();
+        this.$.dropState.shape = "more";
         evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
       },
       _handleDrop: function(evt) {
         evt.stopPropagation();
         evt.preventDefault();
-
+        this.$.dropState.shape = "up";
         if (!this.$.uploadProgress.hidden) {
           alert("please wait until upload is complete");
           return;
@@ -210,6 +229,7 @@ until polymerfire supports Firebase storage all heka-fire elements utilize heka-
         this.uploadingMeta.uploaded = uploaded.toString();
         this.$.doc.query.ref.push().set(this.uploadingMeta);
         this._resetUploader();
+        this.$.dropState.shape = "check";
         console.log('Upload is complete');
       },
       _resetUploader: function() {
