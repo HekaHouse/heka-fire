@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <title>heka-icon-transition demo</title>
+    <script src="../../webcomponentsjs/webcomponents-lite.min.js"></script>
+        <link rel="import" href="../heka-icon-transition.html">
+    <style is="custom-style" include="demo-pages-shared-styles">
+      app-header span {
+        margin: 16px;
+      }
+      #target {
+        display: block;
+        padding: 20px;
+      }
+      icon-transition {
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body unresolved>
+    <template is="dom-bind">
+      <app-header condenses fixed effects="resize-title blend-background waterfall">
+        <span>a transitioning icon material design style.</span>
+      </app-header>
+
+          <heka-icon-transition id="target" color="#000" id="hero" shape="check"></heka-icon-transition>
+
+          <heka-icon-transition id="plusIcon" shape="plus" ></heka-icon-transition>
+
+
+  </template>
+  <script>
+    window.addEventListener('WebComponentsReady', function(e) {
+      function shuffle(array) {
+        var currentIndex = array.length, temporaryValue, randomIndex;
+
+        // While there remain elements to shuffle...
+        while (0 !== currentIndex) {
+
+          // Pick a remaining element...
+          randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex -= 1;
+
+          // And swap it with the current element.
+          temporaryValue = array[currentIndex];
+          array[currentIndex] = array[randomIndex];
+          array[randomIndex] = temporaryValue;
+        }
+
+        return array;
+      }
+      function transitioner() {
+        document.querySelector('heka-icon-transition#target').shape = shuffle(['plus','check','more','menu','up','down','left-arrow','right-arrow','cancel','more-vert','right','left'])[0];
+        setTimeout(transitioner, 3000);
+      }
+      setTimeout(transitioner, 3000);
+    });
+  </script>
+  </body>
+</html>
