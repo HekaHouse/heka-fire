@@ -153,7 +153,7 @@ until polymerfire supports Firebase storage all heka-fire elements utilize heka-
           value: {}
         }
       },
-      observers: ['_initApp(app,appName,key,path)'],
+      observers: ['_initApp(app,appName,owner,path)'],
       attached: function() {
         this.$.dropZone.addEventListener('dragover', this._handleDrag.bind(this), false);
         this.$.dropZone.addEventListener('drop', this._handleDrop.bind(this), false);
