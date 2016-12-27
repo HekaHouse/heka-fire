@@ -170,8 +170,10 @@ until polymerfire supports Firebase storage all heka-fire elements utilize heka-
         }
 
         var keyed = this.key;
-        if (keyed == null) {
+        if (!keyed) {
           keyed = prompt("Enter your advertiser key: ", "advertiser key");
+        } else {
+          alert("keyed:"+keyed);
         }
 
         this.$.dropState.shape = "up";
