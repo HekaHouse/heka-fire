@@ -1,7 +1,7 @@
 {
   "name": "heka-fire",
   "description": "A collection of elements for integrating Firebase.",
-  "version": "0.9.8",
+  "version": "0.9.9",
   "main": [
     "heka-fire.html",
     "heka-fire-input.html",
