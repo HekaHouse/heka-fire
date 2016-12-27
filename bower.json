@@ -1,13 +1,9 @@
 {
   "name": "heka-fire",
   "description": "A collection of elements for integrating Firebase.",
-  "version": "0.9.9",
+  "version": "1.0.0",
   "main": [
-    "heka-fire.html",
-    "heka-fire-input.html",
-    "heka-fire-card.html",
-    "heka-fire-list.html",
-    "heka-fire-upload.html"
+    "heka-fire.html"
   ],
   "dependencies": {
     "polymer": "Polymer/polymer#^1.5.0",
